@@ -11,16 +11,54 @@
 #pragma once
 
 #include "CloudsVisualSystem.h"
+#include "Cog.h"
+
+class BoundBox{
+public:
+	BoundBox(){
+		minBound.set( 1000000, 1000000, 1000000);
+		maxBound.set( -1000000, -1000000, -1000000);
+	};
+	
+	BoundBox(vector<ofVec3f>& v){
+		minBound.set( 1000000, 1000000, 1000000);
+		maxBound.set( -1000000, -1000000, -1000000);
+		
+		compute( v );
+	};
+	
+	~BoundBox(){};
+	
+	void compute( vector<ofVec3f>& v )
+	{
+		for (vector<ofVec3f>::iterator it=v.begin(); it!=v.end(); it++)
+		{
+			minBound.x = min( minBound.x, it->x );
+			minBound.y = min( minBound.y, it->y );
+			minBound.z = min( minBound.z, it->z );
+			
+			maxBound.x = max( maxBound.x, it->x );
+			maxBound.y = max( maxBound.y, it->y );
+			maxBound.z = max( maxBound.z, it->z );
+		}
+		
+		centroid = (minBound + maxBound) * .5;
+	}
+	
+	ofVec3f minBound;
+	ofVec3f maxBound;
+	ofVec3f centroid;
+};
 
 //TODO: rename this to your own visual system
-class CloudsVisualSystemEmpty : public CloudsVisualSystem {
+class MandalaVisualSystem : public CloudsVisualSystem {
   public:
     
 	//TODO: Change this to the name of your visual system
 	//This determines your data path so name it at first!
 	//ie getVisualSystemDataPath() uses this
     string getSystemName(){
-		return "EmptySystem";
+		return "MandalaVisualSystem";
 	}
 
 	//These methods let us add custom GUI parameters and respond to their events
@@ -98,19 +136,46 @@ class CloudsVisualSystemEmpty : public CloudsVisualSystem {
 		}
 		return CloudsVisualSystem::getCameraRef();
 	}
+	
+	static ofVec3f normalFrom3Points(ofVec3f p0, ofVec3f p1, ofVec3f p2);
+	vector<string> getEdgeStrings( ofMesh& m );
+	vector<string> getBorderEdges( ofMesh& m );
+	ofVboMesh* extrudeSurface( ofVboMesh& surface );
+	ofVboMesh* createMeshFromProfile( vector<ofVec3f> profile, ofVec3f offset = ofVec3f(0, 0, 10), bool centerVertices=true );
+//	ofVboMesh* createBoxMesh( float _w, float _h, float _z, int _subx, int _suby, int _subz );
+	static ofVboMesh* createBoxMesh( float low_w, float hi_w, float low_h, float hi_h, float low_d, float hi_d, int _subx, int _suby, int _subz );
+	
+	static ofVboMesh* createCog( float uRadiansMin, float uRadiansMax, float vRadiansMin, float vRadiansMax, float thickness, int subdX, int subdY );
+	
+	
+	void deleteMesh( ofVboMesh* m );
+	
+	void loadShaders();
+	
+	BoundBox getBoundBox( ofMesh& m );
 
 protected:
     
-    //  Your Stuff
-    //
-	
+    //  our Stuff
 	ofxUISuperCanvas* customGui;
-	bool customToggle;
-	float customFloat1;
-	float customFloat2;
 	
 	bool videoLoaded;
 	ofImage someImage;
 	ofShader pointcloudShader;
 	ofVboMesh simplePointcloud;
+	
+	float spread;
+	
+	ofTessellator tesselator;
+	vector<ofVboMesh*> meshes;
+	
+	ofPolyline polyline;
+	ofVboMesh polyMesh;
+	
+	//shaders
+	ofShader normalShader;
+	ofShader deformerShader;
+	
+	vector<Cog*> cogs;
+	
 };
