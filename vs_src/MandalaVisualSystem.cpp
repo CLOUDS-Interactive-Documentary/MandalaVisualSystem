@@ -106,20 +106,7 @@ void MandalaVisualSystem::selfSetup(){
 	loadShaders();
 	
 		
-//	//create some cogs
-//	for (int i=0; i<10; i++) {
-//		cogs.push_back( new Cog(1, 1, .1 * i, .09, .2, .6) );
-//		if(i%2)	cogs.push_back( new Cog(3, 2, .1 * i, .09, .2, .6) );
-//		if(i%4) cogs.push_back( new Cog(8, 2, .1 * i, .09, .2, .6) );
-//		
-//		cogs.push_back( new Cog(12, 1, .1 * i, .09, .2, .6) );
-//		if(i%2)	cogs.push_back( new Cog(14, 1, .1 * i, .09, .2, .6) );
-//		if(i%4) cogs.push_back( new Cog(16, 1, .1 * i, .09, .2, .2) );
-//		
-//		if(i%2) cogs.push_back( new Cog(18, 3, .1 * i, .09, .2, .7) );
-//		cogs.push_back( new Cog(22, 10, .1 * i, .09, .2, .3) );
-//		if(i%3)cogs.push_back( new Cog( 33, 30, .1 * i, .09, .4, .1) );
-//	}
+
 	
 	
 	images.resize(4);
@@ -165,17 +152,19 @@ void MandalaVisualSystem::selfUpdate()
 	
 	if (currentSubsystem != nextSubsystem )
 	{
+		//remove the old subsystem
+		tearDownSubsystem();
+		
 		//build our sub system
 		switch (nextSubsystem) {
 				
 			//NOISE FIELD
 			case 0:
-				tearDownSubsystem();
 				buildNoiseFieldSubsystem();
 				break;
 				
 			default:
-				tearDownSubsystem();
+				buildDefaultSubsystem();
 				break;
 		}
 		
@@ -229,8 +218,8 @@ void MandalaVisualSystem::drawRandomTextures()
 		ofRotate( rotY, 0, 1, 0);
 		
 		if(i%2){
-//			cogs[i]->frontTexture = textures[i%textures.size()];
-//			cogs[i]->sideTexture = textures[(i+1)%textures.size()];
+			cogs[i]->frontTexture = textures[i%textures.size()];
+			cogs[i]->sideTexture = textures[(i+1)%textures.size()];
 			cogs[i]->draw( &deformedAndTextured, currentSubsystem );
 		}
 		else{
@@ -259,7 +248,7 @@ void MandalaVisualSystem::drawMandala()
 		default:
 			
 			drawAllTheCogs( &deformerShader );
-			//drawRandomTextures();
+			drawRandomTextures();
 			break;
 	}
 }
@@ -363,6 +352,24 @@ Cog* MandalaVisualSystem::addCog( float _radius, float _thickness, float _startU
 {
 	cogs.push_back( new Cog( _radius, _thickness, _startU, _sweepU, _startV, _sweepV, _subdU, _subdV) );
 	return cogs.back();
+}
+
+void MandalaVisualSystem::buildDefaultSubsystem()
+{
+	//create some cogs
+	for (int i=0; i<10; i++) {
+		cogs.push_back( new Cog(1, 1, .1 * i, .09, .2, .6) );
+		if(i%2)	cogs.push_back( new Cog(3, 2, .1 * i, .09, .2, .6) );
+		if(i%4) cogs.push_back( new Cog(8, 2, .1 * i, .09, .2, .6) );
+
+		cogs.push_back( new Cog(12, 1, .1 * i, .09, .2, .6) );
+		if(i%2)	cogs.push_back( new Cog(14, 1, .1 * i, .09, .2, .6) );
+		if(i%4) cogs.push_back( new Cog(16, 1, .1 * i, .09, .2, .2) );
+
+		if(i%2) cogs.push_back( new Cog(18, 3, .1 * i, .09, .2, .7) );
+		cogs.push_back( new Cog(22, 10, .1 * i, .09, .2, .3) );
+		if(i%3)cogs.push_back( new Cog( 33, 30, .1 * i, .09, .4, .1) );
+	}
 }
 
 void MandalaVisualSystem::buildNoiseFieldSubsystem()

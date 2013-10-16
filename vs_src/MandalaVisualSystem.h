@@ -149,6 +149,7 @@ class MandalaVisualSystem : public CloudsVisualSystem {
 	void drawRandomTextures();
 	
 	void tearDownSubsystem();
+	void buildDefaultSubsystem();
 	void buildNoiseFieldSubsystem();
 
 protected:

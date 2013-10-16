@@ -55,9 +55,9 @@ void main()
 	float yPos = gl_Vertex.y + radianOffset.y;
 	float zPos = gl_Vertex.z;
 	
+	//noise field
 	if(renderMode == 0)
 	{
-		//noise field
 		yPos += pow(noise2d( phiTheta * 10. + vec2(time*2.,0.)), 3.) + time * .25;
 	}
 	
