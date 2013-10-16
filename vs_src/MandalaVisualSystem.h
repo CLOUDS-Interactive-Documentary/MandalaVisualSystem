@@ -163,5 +163,7 @@ protected:
 	vector<Cog*> cogs;
 	
 	vector <ofImage> images;
+	vector<ofTexture*> textures;
+	ofVideoPlayer vid;
 	
 };

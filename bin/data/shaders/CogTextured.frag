@@ -11,13 +11,15 @@ uniform sampler2DRect sideTexture;
 uniform int usingSideTexture = 0;
 uniform vec2 sideTexDim;
 
+uniform vec4 frontColor = vec4(1.);
+uniform vec4 sideColor = vec4(1.);
+
 uniform float specularScale = 1.;
 uniform float specularExpo = 32.;
 
 uniform vec2 sweep;
 uniform vec2 startSweep;
 
-uniform vec3 sideColor = vec3( 1., .6, .1);
 uniform float discardThreshold = .005;
 
 varying vec3 norm;
@@ -38,23 +40,34 @@ void main(void)
 	float fr = dot( -normalize(ePos), normal ) ;
 	fr *= specularScale * pow( fr* .5 + .5, specularExpo);
 	
-	gl_FragColor = vec4( vec3(fr), 1.);
+//	gl_FragColor = vec4( vec3(fr), 1.);
+	
+	vec4 diffuse = vec4(1.);
+	vec4 specular = vec4( vec3(fr), 0.);
 	
 	
 	if(isSide > .9)
 	{
+		
+		//side faces
 		if(usingSideTexture > .9)
 		{
-			gl_FragColor += texture2DRect( sideTexture, uv * sideTexDim );
+			diffuse *= texture2DRect( sideTexture, uv * sideTexDim );
 		}
+		diffuse *= sideColor;
 	}
 	else
 	{
+		//front and back faces
 		if(usingFrontTexture > .9)
 		{
-			gl_FragColor += texture2DRect( frontTexture, uv * frontTexDim );
+			diffuse *= texture2DRect( frontTexture, uv * frontTexDim );
 		}
+		diffuse *= frontColor;
 	}
+	
+	
+	gl_FragColor = diffuse + specular;
 	
 	//
 	if(gl_FragColor.w < discardThreshold)	discard;

@@ -46,6 +46,9 @@ void Cog::setup(float _radius,float _thickness, float _startU, float _sweepU, fl
 	
 	subdScl = 10;
 	
+	frontColor.set(1, 1, 1, 1);
+	sideColor.set(1, 1, 1, 1);
+	
 	//get our subd for u and v
 	minU = TWO_PI * _startU;
 	maxU = TWO_PI * (_startU + _sweepU);
@@ -76,6 +79,9 @@ void Cog::draw( ofShader* _shader )
 		_shader->setUniform2f("radianOffset",  + radianOffset.x,  + radianOffset.y );
 		_shader->setUniform2f("sweep", sweepU, sweepV);
 		_shader->setUniform2f("startSweep", minU, minV);
+		_shader->setUniform4f("frontColor", frontColor.r, frontColor.g, frontColor.b, frontColor.a );
+		_shader->setUniform4f("sideColor", sideColor.r, sideColor.g, sideColor.b, sideColor.a );
+		
 		if(frontTexture != NULL)
 		{
 			_shader->setUniform1i("usingFrontTexture", 1);

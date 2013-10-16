@@ -88,6 +88,14 @@ void MandalaVisualSystem::selfSetup(){
 	images[1].loadImage( getVisualSystemDataPath() + "images/germanBirdRamp.jpg" );
 	images[2].loadImage( getVisualSystemDataPath() + "images/greenFatBird.jpg" );
 	images[3].loadImage( getVisualSystemDataPath() + "images/laser-eyes1.jpg" );
+	
+	for (int i=0; i<images.size(); i++) {
+		textures.push_back( &images[i].getTextureReference() );
+	}
+	
+	vid.loadMovie(getVisualSystemDataPath() + "images/aliens.gif" );
+	vid.play();
+	textures.push_back( &vid.getTextureReference() );
 }
 
 // selfPresetLoaded is called whenever a new preset is triggered
@@ -113,7 +121,7 @@ void MandalaVisualSystem::selfSceneTransformation(){
 //normal update call
 void MandalaVisualSystem::selfUpdate()
 {
-
+	vid.update();
 }
 
 // selfDraw draws in 3D using the default ofEasyCamera
@@ -162,8 +170,8 @@ void MandalaVisualSystem::drawMandala()
 		ofRotate( rotY, 0, 1, 0);
 		
 		if(i%2){
-			cogs[i]->frontTexture = &images[i%4].getTextureReference();
-			cogs[i]->sideTexture = &images[(i+1)%4].getTextureReference();
+			cogs[i]->frontTexture = textures[i%textures.size()];
+			cogs[i]->sideTexture = textures[(i+1)%textures.size()];
 			cogs[i]->draw( &deformedAndTextured );
 		}
 		else{

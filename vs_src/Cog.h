@@ -53,4 +53,6 @@ public:
 	ofTexture* frontTexture;
 	ofTexture* sideTexture;
 	
+	ofFloatColor frontColor, sideColor;
+	
 };
