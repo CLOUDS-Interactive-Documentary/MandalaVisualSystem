@@ -14,8 +14,9 @@ uniform vec2 sideTexDim;
 uniform vec4 frontColor = vec4(1.);
 uniform vec4 sideColor = vec4(1.);
 
-uniform float specularScale = 1.;
-uniform float specularExpo = 32.;
+uniform float diffuseScale = .25;
+uniform float specularScale = .5;
+uniform float specularExpo = 64.;
 
 uniform vec2 sweep;
 uniform vec2 startSweep;
@@ -37,36 +38,40 @@ float epsilon = 0.0000001f;
 void main(void)
 {
 	vec3 normal = normalize( norm );
-	float fr = dot( -normalize(ePos), normal ) ;
-	fr *= specularScale * pow( fr* .5 + .5, specularExpo);
-	
-//	gl_FragColor = vec4( vec3(fr), 1.);
+	float fr = dot( -normalize(ePos), normal );
 	
 	vec4 diffuse = vec4(1.);
-	vec4 specular = vec4( vec3(fr), 0.);
+	vec4 specular = vec4( vec3(specularScale * pow( abs(fr), specularExpo) ), 0.);
 	
-	
+	//side faces
 	if(isSide > .9)
 	{
+		//diffuse
+		diffuse *= sideColor;
 		
-		//side faces
+		//texture
 		if(usingSideTexture > .9)
 		{
 			diffuse *= texture2DRect( sideTexture, uv * sideTexDim );
 		}
-		diffuse *= sideColor;
 	}
+	//front and back faces
 	else
 	{
-		//front and back faces
+		//diffuse color
+		diffuse *= frontColor;
+		
+		//texture
 		if(usingFrontTexture > .9)
 		{
 			diffuse *= texture2DRect( frontTexture, uv * frontTexDim );
 		}
-		diffuse *= frontColor;
 	}
 	
+	//diffuse
+	diffuse.xyz *= fr * (1.-diffuseScale) + diffuseScale;
 	
+	//add it all up
 	gl_FragColor = diffuse + specular;
 	
 	//
