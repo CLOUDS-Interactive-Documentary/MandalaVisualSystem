@@ -20,7 +20,7 @@ public:
 	
 	void draw( ofShader* _shader = NULL );
 	
-	void drawBorders();
+	void drawBorders(ofShader* _shader);
 	
 	void setupMesh();
 	

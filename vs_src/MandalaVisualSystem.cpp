@@ -146,7 +146,8 @@ void MandalaVisualSystem::drawMandala()
 		ofPushMatrix();
 		ofRotate( rotY, 0, 1, 0);
 		
-		cogs[i]->draw( &deformerShader );
+		if(i%2)	cogs[i]->draw( &deformerShader );
+		else	cogs[i]->drawBorders( &deformerShader );
 		
 		ofPopMatrix();
 	}

@@ -44,8 +44,8 @@ void Cog::setup(float _radius,
 		   float _sweepV)
 {
 	edgeIndexCount = 0;
-	bDrawBorders = true;
-	bDrawMesh = false;
+	bDrawBorders = false;
+	bDrawMesh = true;
 	edgeLinewidth = 1.;
 	thickness = _thickness;
 	radius = _radius;
@@ -89,7 +89,9 @@ void Cog::draw( ofShader* _shader )
 		}
 		
 		if (bDrawBorders) {
-			drawBorders();
+			glNormal3f(0, 0, 1);
+			glLineWidth( edgeLinewidth );
+			edges.drawElements(GL_LINES, edgeIndexCount );
 		}
 		
 		
@@ -98,11 +100,29 @@ void Cog::draw( ofShader* _shader )
 	}
 }
 
-void Cog::drawBorders()
+void Cog::drawBorders(ofShader* _shader )
 {
-	glNormal3f(0, 0, 1);
-	glLineWidth( edgeLinewidth );
-	edges.drawElements(GL_LINES, edgeIndexCount );
+	if(_shader == NULL)	_shader = shader;
+	
+	if(_shader != NULL && m != NULL)
+	{
+		ofPushMatrix();
+		//			ofMultMatrix( getGlobalTransformMatrix() );
+		
+		_shader->begin();
+		_shader->setUniform1f( "time", ofGetElapsedTimef() );
+		_shader->setUniform1f( "radius", radius );
+		_shader->setUniform2f("radianOffset",  + radianOffset.x,  + radianOffset.y );
+		_shader->setUniform2f("sweep", sweepU, sweepV);
+		_shader->setUniform2f("startSweep", minU, minV);
+		
+		glNormal3f(0, 0, 1);
+		glLineWidth( edgeLinewidth );
+		edges.drawElements(GL_LINES, edgeIndexCount );
+		
+		_shader->end();
+		ofPopMatrix();
+	}
 };
 
 void Cog::setupMesh()
@@ -494,15 +514,11 @@ ofVboMesh* Cog::createCogMesh( float low_w, float hi_w, float low_h, float hi_h,
 		edgeUVs.push_back( ofVec2f( 1, i * uvStepY ) );
 	}
 	
-	
-
 	edges.setVertexData( &edgeVerts[0], edgeVerts.size(), GL_STATIC_DRAW );
 	edges.setTexCoordData( &edgeUVs[0], edgeUVs.size(), GL_STATIC_DRAW );
 	edges.setIndexData( &edgeIndices[0], edgeIndices.size(), GL_STATIC_DRAW );
 	
 	edgeIndexCount = edgeIndices.size();
-	
-	edgeLinewidth = 4;
 	
 	return m;
 }
