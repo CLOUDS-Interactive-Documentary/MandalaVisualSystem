@@ -57,8 +57,13 @@ void MandalaVisualSystem::selfSetup(){
 
 	//getVisualSystemDataPath() + "images/someImage.png";
 	
+	//defaults
+	mandalaGlobalScale.set(1,1,1);
+	
+	
 	//shader setup
 	loadShaders();
+	
 		
 	//create some cogs
 	for (int i=0; i<10; i++) {
@@ -115,6 +120,9 @@ void MandalaVisualSystem::selfUpdate()
 // you can change the camera by returning getCameraRef()
 void MandalaVisualSystem::selfDraw()
 {
+	ofPushMatrix();
+	ofScale( mandalaGlobalScale.x, mandalaGlobalScale.y, mandalaGlobalScale.z );
+	
 	ofEnableAlphaBlending();
 	
 	glLineWidth( 2 );
@@ -143,8 +151,7 @@ void MandalaVisualSystem::selfDraw()
 	glDisable(GL_CULL_FACE);
 	glDisable(GL_DEPTH_TEST);
 	
-	
-
+	ofPopMatrix();
 }
 
 void MandalaVisualSystem::drawMandala()
@@ -195,9 +202,6 @@ void MandalaVisualSystem::selfEnd(){
 // this is called when you should clear all the memory and delet anything you made in setup
 void MandalaVisualSystem::selfExit()
 {
-	for (vector<ofVboMesh*>::iterator it = meshes.begin(); it != meshes.end(); it++) {
-		(*it)->clear();
-	}
 	
 	for (vector<Cog*>::iterator it = cogs.begin(); it != cogs.end(); it++) {
 		(*it)->clear();
@@ -237,389 +241,10 @@ void MandalaVisualSystem::selfMouseReleased(ofMouseEventArgs& data){
 	
 }
 
-ofVec3f MandalaVisualSystem::normalFrom3Points(ofVec3f p0, ofVec3f p1, ofVec3f p2)
-{
-	ofVec3f norm = (p2 - p1).cross( p0 - p1);
-	return norm.normalized();
-}
-
-vector<string> MandalaVisualSystem::getEdgeStrings( ofMesh& m )
-{
-	vector<string> e( m.getIndices().size() );
-	vector<ofIndexType>& indices = m.getIndices();
-	
-	for (int i=0; i<indices.size(); i+=3)
-	{
-//		e[i+0] = ofToString( min(indices[i], indices[i+1]) ) + "_" + ofToString( max(indices[i], indices[i+1]) );
-//		e[i+1] = ofToString( min(indices[i+1], indices[i+2]) ) + "_" + ofToString( max(indices[i+1], indices[i+2]) );
-//		e[i+2] = ofToString( min(indices[i], indices[i+2]) ) + "_" + ofToString( max(indices[i], indices[i+2]) );
-		
-		e[i+0] = ofToString( indices[i] ) + "_" + ofToString( indices[i+1] );
-		e[i+1] = ofToString( indices[i+1] ) + "_" + ofToString( indices[i+2] );
-		e[i+2] = ofToString( indices[i+2] ) + "_" + ofToString( indices[i] );
-	}
-	
-	return e;
-}
-
-vector<string> MandalaVisualSystem::getBorderEdges( ofMesh& m )
-{
-	vector<string> borderEdges;
-	map<string, int> edgeMap;
-	
-	vector<ofIndexType>& indices = m.getIndices();
-	
-	string e0,e1,e2;
-	for (int i=0; i<indices.size(); i+=3)
-	{
-		e0 = ofToString( min(indices[i], indices[i+1]) ) + "_" + ofToString(max(indices[i], indices[i+1]) );
-		e1 = ofToString( min(indices[i+1], indices[i+2]) ) + "_" + ofToString(max(indices[i+1], indices[i+2]) );
-		e2 = ofToString( min(indices[i], indices[i+2]) ) + "_" + ofToString(max(indices[i], indices[i+2]) );
-		
-		edgeMap[e0] = edgeMap.find(e0) != edgeMap.end() ? edgeMap[e0] + 1 : 1;
-		edgeMap[e1] = edgeMap.find(e1) != edgeMap.end() ? edgeMap[e1] + 1 : 1;
-		edgeMap[e2] = edgeMap.find(e2) != edgeMap.end() ? edgeMap[e2] + 1 : 1;
-	}
-	
-	for (map<string, int>::iterator it = edgeMap.begin(); it!=edgeMap.end(); it++) {
-		if(it->second == 1){
-			borderEdges.push_back( it->first );
-		}
-	}
-	
-	return borderEdges;
-}
-
-
-ofVboMesh* MandalaVisualSystem::createMeshFromProfile( vector<ofVec3f> profile, ofVec3f offset, bool centerVertices )
-{
-	//create polyline out of our contour
-	ofPolyline pl;
-	pl.addVertices( profile );
-	
-	//create a tubular mesh by extruding the curve. how do we cap our holes?
-	ofVboMesh* m = new ofVboMesh;
-	
-	//teselate our polyline
-	tesselator.tessellateToMesh( pl, OF_POLY_WINDING_POSITIVE, *m );
-
-	vector<ofVec3f>& plv = pl.getVertices();
-	vector<ofVec3f>& v = m->getVertices();
-	vector<ofIndexType>& indices = m->getIndices();
-	
-	vector<ofVec3f> capVertices = m->getVertices();
-	int capIndexCount = indices.size();
-	
-	//lofeted borders
-	for (int i=0; i<plv.size()-1; i++)
-	{
-		//border triangle vertices
-		int nextIndex = v.size();
-		m->addVertex( plv[i] );
-		m->addVertex( plv[i+1] );
-		m->addVertex( plv[i+1] + offset );
-		m->addVertex( plv[i] + offset );
-		
-		//border triangle indices
-		m->addIndex( nextIndex );
-		m->addIndex( nextIndex + 1);
-		m->addIndex( nextIndex + 2);
-		
-		m->addIndex( nextIndex );
-		m->addIndex( nextIndex + 2);
-		m->addIndex( nextIndex + 3);
-	}
-	
-	//other cap with flipped normals
-	for (int i=0; i<capIndexCount; i+=3)
-	{
-		//cap vertices
-		int nextIndex = v.size();
-		m->addVertex( v[indices[i] ] + offset);
-		m->addVertex( v[indices[i+1] ] + offset);
-		m->addVertex( v[indices[i+2] ] + offset);
-		
-		//cap indices
-		m->addIndex( nextIndex );
-		m->addIndex( nextIndex+2 );
-		m->addIndex( nextIndex+1 );
-	}
-	
-	//compute smoothed normals
-	vector<ofVec3f> n(v.size());
-	ofVec3f norm;
-	for (int i=0; i<indices.size(); i+=3)
-	{
-		norm = normalFrom3Points( v[indices[i]], v[indices[i+1]], v[indices[i+2]]);
-		n[indices[i]] += norm;
-		n[indices[i+1]] += norm;
-		n[indices[i+2]] += norm;
-	}
-	
-	for (int i=0; i<n.size(); i++)
-	{
-		n[i].normalize();
-	}
-	m->addNormals( n );
-	
-	if(centerVertices)
-	{
-		BoundBox bb(v);
-		
-		for (int i=0; i<v.size(); i++)
-		{
-			m->setVertex( i, v[i] - bb.centroid);
-		}
-		
-	}
-	
-	return m;
-}
-
-BoundBox MandalaVisualSystem::getBoundBox( ofMesh& m )
-{
-	return BoundBox( m.getVertices() );
-}
-
 void MandalaVisualSystem::loadShaders()
 {
 	normalShader.load( getVisualSystemDataPath() + "shaders/normalShader");
 	deformerShader.load( getVisualSystemDataPath() + "shaders/deformer");
 	
 	deformedAndTextured.load( getVisualSystemDataPath() + "shaders/deformer.vert", getVisualSystemDataPath() + "shaders/CogTextured.frag");
-}
-
-void MandalaVisualSystem::deleteMesh( ofVboMesh* m )
-{
-	for(int i=meshes.size()-1; i>=0; i--)
-	{
-		if(meshes[i] == m )
-		{
-			m->clear();
-			meshes.erase( meshes.begin() + i );
-		}
-	}
-}
-
-ofVboMesh* MandalaVisualSystem::createCog( float uRadiansMin, float uRadiansMax, float vRadiansMin, float vRadiansMax, float thickness, int subdX, int subdY )
-{
-	return createBoxMesh(uRadiansMin, uRadiansMax, vRadiansMin, vRadiansMax, 0, thickness, subdX, subdY, 1 );
-}
-
-ofVboMesh* MandalaVisualSystem::createBoxMesh( float low_w, float hi_w, float low_h, float hi_h, float low_d, float hi_d, int _subx, int _suby, int _subz )
-{
-	ofVboMesh* m = new ofVboMesh;
-	
-	int subx = max( 1, _subx );
-	int suby = max( 1, _suby );
-	int subz = max( 1, _subz );
-	
-	
-	vector<ofVec3f> v;
-	vector<ofVec2f> uv;
-	vector<ofIndexType> indices;
-	
-	float stepX = (hi_w - low_w)/subx;
-	float stepY = (hi_h - low_h)/suby;
-	float stepZ = (hi_d - low_d)/subz;
-	
-	float uvStepX = 1./subx;
-	float uvStepY = 1./suby;
-	float uvStepZ = 1./subz;
-
-	vector< vector< int > > tempIndices;
-	
-	//front
-	tempIndices.resize(subx+1);
-	for (int i=0; i<tempIndices.size(); i++)
-	{
-		tempIndices[i].resize(suby+1);
-		for (int j=0; j<tempIndices[i].size(); j++)
-		{
-			tempIndices[i][j] = v.size();
-			v.push_back( ofVec3f( i*stepX + low_w, j*stepY + low_h, hi_d ) );
-			uv.push_back( ofVec2f(i*uvStepX, j*uvStepY) );
-		}
-	}
-	for (int i = 0; i<tempIndices.size()-1; i++)
-	{
-		for(int j=0; j<tempIndices[i].size()-1; j++)
-		{
-			indices.push_back( tempIndices[i][j] );
-			indices.push_back( tempIndices[i+1][j+1] );
-			indices.push_back( tempIndices[i][j+1] );
-			
-			indices.push_back( tempIndices[i][j] );
-			indices.push_back( tempIndices[i+1][j] );
-			indices.push_back( tempIndices[i+1][j+1] );
-		}
-		tempIndices[i].clear();
-	}
-	tempIndices.clear();
-	
-	//back
-	tempIndices.resize(subx+1);
-	for (int i=0; i<tempIndices.size(); i++)
-	{
-		tempIndices[i].resize(suby+1);
-		for (int j=0; j<tempIndices[i].size(); j++)
-		{
-			tempIndices[i][j] = v.size();
-			v.push_back( ofVec3f( i*stepX + low_w, j*stepY + low_h, low_d ) );
-			uv.push_back( ofVec2f(i*uvStepX, j*uvStepY) );
-		}
-	}
-	for (int i = 0; i<tempIndices.size()-1; i++)
-	{
-		for(int j=0; j<tempIndices[i].size()-1; j++)
-		{
-			indices.push_back( tempIndices[i][j] );
-			indices.push_back( tempIndices[i][j+1] );
-			indices.push_back( tempIndices[i+1][j+1] );
-			
-			indices.push_back( tempIndices[i][j] );
-			indices.push_back( tempIndices[i+1][j+1] );
-			indices.push_back( tempIndices[i+1][j] );
-		}
-		tempIndices[i].clear();
-	}
-	tempIndices.clear();
-	
-	
-	//left
-	tempIndices.resize(suby+1);
-	for (int i=0; i<tempIndices.size(); i++)
-	{
-		tempIndices[i].resize(subz+1);
-		for (int j=0; j<tempIndices[i].size(); j++)
-		{
-			tempIndices[i][j] = v.size();
-			v.push_back( ofVec3f( hi_w, i*stepY + low_h, j*stepZ + low_d ) );
-			uv.push_back( ofVec2f(i*uvStepY, j*uvStepZ) );
-		}
-	}
-	for (int i = 0; i<tempIndices.size()-1; i++)
-	{
-		for(int j=0; j<tempIndices[i].size()-1; j++)
-		{
-			indices.push_back( tempIndices[i][j] );
-			indices.push_back( tempIndices[i+1][j+1] );
-			indices.push_back( tempIndices[i][j+1] );
-			
-			indices.push_back( tempIndices[i][j] );
-			indices.push_back( tempIndices[i+1][j] );
-			indices.push_back( tempIndices[i+1][j+1] );
-		}
-		tempIndices[i].clear();
-	}
-	tempIndices.clear();
-	
-	//right
-	tempIndices.resize(suby+1);
-	for (int i=0; i<tempIndices.size(); i++)
-	{
-		tempIndices[i].resize(subz+1);
-		for (int j=0; j<tempIndices[i].size(); j++)
-		{
-			tempIndices[i][j] = v.size();
-			v.push_back( ofVec3f( low_w, i*stepY + low_h, j*stepZ + low_d ) );
-			uv.push_back( ofVec2f(i*uvStepY, j*uvStepZ) );
-		}
-	}
-	for (int i = 0; i<tempIndices.size()-1; i++)
-	{
-		for(int j=0; j<tempIndices[i].size()-1; j++)
-		{
-			indices.push_back( tempIndices[i][j] );
-			indices.push_back( tempIndices[i][j+1] );
-			indices.push_back( tempIndices[i+1][j+1] );
-			
-			indices.push_back( tempIndices[i][j] );
-			indices.push_back( tempIndices[i+1][j+1] );
-			indices.push_back( tempIndices[i+1][j] );
-		}
-		tempIndices[i].clear();
-	}
-	tempIndices.clear();
-	
-	//top
-	tempIndices.resize(subx+1);
-	for (int i=0; i<tempIndices.size(); i++)
-	{
-		tempIndices[i].resize(subz+1);
-		for (int j=0; j<tempIndices[i].size(); j++)
-		{
-			tempIndices[i][j] = v.size();
-			v.push_back( ofVec3f(  i*stepX + low_w, hi_h, j*stepZ + low_d ) );
-			uv.push_back( ofVec2f(i*uvStepX, j*uvStepZ) );
-		}
-	}
-	for (int i = 0; i<tempIndices.size()-1; i++)
-	{
-		for(int j=0; j<tempIndices[i].size()-1; j++)
-		{
-			indices.push_back( tempIndices[i][j] );
-			indices.push_back( tempIndices[i][j+1] );
-			indices.push_back( tempIndices[i+1][j+1] );
-			
-			indices.push_back( tempIndices[i][j] );
-			indices.push_back( tempIndices[i+1][j+1] );
-			indices.push_back( tempIndices[i+1][j] );
-		}
-		tempIndices[i].clear();
-	}
-	tempIndices.clear();
-	
-	
-	//bottom
-	tempIndices.resize(subx+1);
-	for (int i=0; i<tempIndices.size(); i++)
-	{
-		tempIndices[i].resize(subz+1);
-		for (int j=0; j<tempIndices[i].size(); j++)
-		{
-			tempIndices[i][j] = v.size();
-			v.push_back( ofVec3f(  i*stepX + low_w, low_h, j*stepZ + low_d ) );
-			uv.push_back( ofVec2f(i*uvStepX, j*uvStepZ) );
-		}
-	}
-	for (int i = 0; i<tempIndices.size()-1; i++)
-	{
-		for(int j=0; j<tempIndices[i].size()-1; j++)
-		{
-			indices.push_back( tempIndices[i][j] );
-			indices.push_back( tempIndices[i+1][j+1] );
-			indices.push_back( tempIndices[i][j+1] );
-			
-			indices.push_back( tempIndices[i][j] );
-			indices.push_back( tempIndices[i+1][j] );
-			indices.push_back( tempIndices[i+1][j+1] );
-		}
-		tempIndices[i].clear();
-	}
-	tempIndices.clear();
-	
-	//compute smoothed normals( one normal per vertex, not per face)
-	vector<ofVec3f> n(v.size());
-	ofVec3f norm;
-	for (int i=0; i<indices.size(); i+=3)
-	{
-		norm = normalFrom3Points( v[indices[i]], v[indices[i+1]], v[indices[i+2]]);
-		n[indices[i]] += norm;
-		n[indices[i+1]] += norm;
-		n[indices[i+2]] += norm;
-	}
-	
-	for (int i=0; i<n.size(); i++)
-	{
-		n[i].normalize();
-	}
-	
-	m->addVertices( v );
-	m->addNormals( n );
-	m->addTexCoords( uv );
-	m->addIndices( indices );
-
-	
-	return m;
 }

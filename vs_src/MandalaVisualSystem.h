@@ -136,23 +136,10 @@ class MandalaVisualSystem : public CloudsVisualSystem {
 		}
 		return CloudsVisualSystem::getCameraRef();
 	}
-	
-	static ofVec3f normalFrom3Points(ofVec3f p0, ofVec3f p1, ofVec3f p2);
-	vector<string> getEdgeStrings( ofMesh& m );
-	vector<string> getBorderEdges( ofMesh& m );
-	ofVboMesh* extrudeSurface( ofVboMesh& surface );
-	ofVboMesh* createMeshFromProfile( vector<ofVec3f> profile, ofVec3f offset = ofVec3f(0, 0, 10), bool centerVertices=true );
-//	ofVboMesh* createBoxMesh( float _w, float _h, float _z, int _subx, int _suby, int _subz );
-	static ofVboMesh* createBoxMesh( float low_w, float hi_w, float low_h, float hi_h, float low_d, float hi_d, int _subx, int _suby, int _subz );
-	
+
 	static ofVboMesh* createCog( float uRadiansMin, float uRadiansMax, float vRadiansMin, float vRadiansMax, float thickness, int subdX, int subdY );
 	
-	
-	void deleteMesh( ofVboMesh* m );
-	
 	void loadShaders();
-	
-	BoundBox getBoundBox( ofMesh& m );
 	
 	void drawMandala();
 
@@ -166,13 +153,7 @@ protected:
 	ofShader pointcloudShader;
 	ofVboMesh simplePointcloud;
 	
-	float spread;
-	
-	ofTessellator tesselator;
-	vector<ofVboMesh*> meshes;
-	
-	ofPolyline polyline;
-	ofVboMesh polyMesh;
+	ofVec3f mandalaGlobalScale;
 	
 	//shaders
 	ofShader normalShader;
