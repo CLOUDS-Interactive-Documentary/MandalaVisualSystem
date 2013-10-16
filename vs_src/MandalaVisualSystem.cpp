@@ -19,6 +19,10 @@ void MandalaVisualSystem::selfSetupGui(){
 	customGui->setName("Custom");
 	customGui->setWidgetFontSize(OFX_UI_FONT_SMALL);
 	
+	customGui->addSlider("globalScale.x", -10, 10, &mandalaGlobalScale.x );
+	customGui->addSlider("globalScale.y", -10, 10, &mandalaGlobalScale.y );
+	customGui->addSlider("globalScale.z", -10, 10, &mandalaGlobalScale.z );
+	
 	ofAddListener(customGui->newGUIEvent, this, &MandalaVisualSystem::selfGuiEvent);
 	guis.push_back(customGui);
 	guimap[customGui->getName()] = customGui;
@@ -377,6 +381,7 @@ void MandalaVisualSystem::buildNoiseFieldSubsystem()
 	int numRings = 8;
 	float thickness = 10;
 	float roughSize = 20;
+	float minRadius = 5;
 	
 	float radius, circumfrence, minCol = 0, maxCol = 1.5;
 	int subd;
@@ -389,7 +394,7 @@ void MandalaVisualSystem::buildNoiseFieldSubsystem()
 		float step = .5/subd;
 		for(int j=0; j<subd; j++){
 			float sweep = .9 * step;
-			Cog* c = addCog(radius, thickness, float(j) * step, sweep, ofRandom(2.), .025 + ofRandom(.3), Cog::radiansToSdubd(sweep), 6 );
+			Cog* c = addCog(radius + ofRandom(thickness) + minRadius, thickness, float(j) * step, sweep, ofRandom(2.), .025 + ofRandom(.3), Cog::radiansToSdubd(sweep), 6 );
 			
 			c->sideColor.set( ofRandom(minCol, maxCol), ofRandom(minCol, maxCol), ofRandom(minCol, maxCol), 1. );
 			c->frontColor.set( c->sideColor.getInverted() * 2.);
