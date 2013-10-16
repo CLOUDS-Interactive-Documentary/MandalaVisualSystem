@@ -107,35 +107,42 @@ void MandalaVisualSystem::selfUpdate()
 // you can change the camera by returning getCameraRef()
 void MandalaVisualSystem::selfDraw()
 {
-	
-//	ofSetColor(255);
-//	bool filled = ofGetFill();
-//	ofFill();
-//	polyline.draw();
-//	if(!filled)	ofNoFill();
-//	
-//	ofSetColor(255, 255, 0);
-//	polyMesh.drawWireframe();
+	ofEnableAlphaBlending();
 	
 	glLineWidth( 2 );
+	
+	glEnable(GL_CULL_FACE);
+	glCullFace(GL_FRONT);
+	
 
-//	float rotY = floor( ofGetElapsedTimef() ) * 10;
-//	ofPushMatrix();
-//	ofRotate( rotY, 0, 1, 0);
-//	for (int i=0; i<meshes.size(); i++)
-//	{
-////		ofTranslate(0, i * 10, 0 );
-//		
-//		deformerShader.begin();
-//		deformerShader.setUniform1f("time", ofGetElapsedTimef() );
-//		meshes[i]->draw();
-//		deformerShader.end();
-//	}
+	glEnable(GL_DEPTH_TEST);
+//	glDisable(GL_DEPTH_TEST);
+//	glDepthFunc(GL_GREATER);
 	
-	ofPopMatrix();
 	
+	glClearDepth(1.);
+	glDepthFunc(GL_LESS);
+	
+	drawMandala();
+	
+	
+	glClearDepth(1.);
+	glDepthFunc(GL_LESS);
+	
+	glCullFace(GL_BACK);
+	drawMandala();
+	
+	glDisable(GL_CULL_FACE);
+	glDisable(GL_DEPTH_TEST);
+	
+	
+
+}
+
+void MandalaVisualSystem::drawMandala()
+{
 	for (int i=0; i<cogs.size(); i++) {
-		float rotY = floor( ofGetElapsedTimef() * floor(cogs[i]->radius ) * .1 ) * 10;
+		float rotY = ofGetElapsedTimef() * cogs[i]->radius;
 		ofPushMatrix();
 		ofRotate( rotY, 0, 1, 0);
 		
@@ -143,7 +150,6 @@ void MandalaVisualSystem::selfDraw()
 		
 		ofPopMatrix();
 	}
-
 }
 
 // draw any debug stuff here

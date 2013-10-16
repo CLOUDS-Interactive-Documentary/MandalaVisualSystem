@@ -153,6 +153,8 @@ class MandalaVisualSystem : public CloudsVisualSystem {
 	void loadShaders();
 	
 	BoundBox getBoundBox( ofMesh& m );
+	
+	void drawMandala();
 
 protected:
     

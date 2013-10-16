@@ -8,12 +8,146 @@
 
 #include "Cog.h"
 
-ofVboMesh* Cog::createCog( float uRadiansMin, float uRadiansMax, float vRadiansMin, float vRadiansMax, float thickness, int subdX, int subdY )
+Cog::Cog(float _radius,
+	float _thickness,
+	float _startU,
+	float _sweepU,
+	float _startV,
+	float _sweepV)
 {
-	return createBoxMesh(uRadiansMin, uRadiansMax, vRadiansMin, vRadiansMax, 0, thickness, subdX, subdY, 1 );
+	m = NULL;
+	shader != NULL;
+	bDrawWireframe = false;
+	
+	setup( _radius, _thickness, _startU, _sweepU, _startV, _sweepV);
+};
+
+Cog::Cog()
+{
+	m = NULL;
+	shader != NULL;
+	bDrawWireframe = false;
+	
+	setup( 10, 2, 0, .5, 0.25, .75);
+};
+
+Cog::~Cog()
+{
+	clearMesh();
+};
+
+void Cog::setup(float _radius,
+		   float _thickness,
+		   float _startU,
+		   float _sweepU,
+		   float _startV,
+		   float _sweepV)
+{
+	edgeIndexCount = 0;
+	bDrawBorders = true;
+	bDrawMesh = false;
+	edgeLinewidth = 1.;
+	thickness = _thickness;
+	radius = _radius;
+	
+	subdScl = 10;
+	
+	//get our subd for u and v
+	minU = TWO_PI * _startU;
+	maxU = TWO_PI * (_startU + _sweepU);
+	minV = PI * _startV;
+	maxV = PI * (_startV + _sweepV);
+	
+	sweepU = maxU - minU;
+	sweepV = maxV - minV;
+	
+	subdU = radiansToSdubd( sweepU );
+	subdV = radiansToSdubd( sweepV );
+	
+	setupMesh();
 }
 
-ofVboMesh* Cog::createBoxMesh( float low_w, float hi_w, float low_h, float hi_h, float low_d, float hi_d, int _subx, int _suby, int _subz )
+void Cog::draw( ofShader* _shader )
+{
+	if(_shader == NULL)	_shader = shader;
+	
+	if(_shader != NULL && m != NULL)
+	{
+		ofPushMatrix();
+		//			ofMultMatrix( getGlobalTransformMatrix() );
+		
+		_shader->begin();
+		_shader->setUniform1f( "time", ofGetElapsedTimef() );
+		_shader->setUniform1f( "radius", radius );
+		_shader->setUniform2f("radianOffset",  + radianOffset.x,  + radianOffset.y );
+		_shader->setUniform2f("sweep", sweepU, sweepV);
+		_shader->setUniform2f("startSweep", minU, minV);
+		
+		if(bDrawMesh)
+		{
+			bDrawWireframe ? m->drawWireframe() : m->draw();
+		}
+		
+		if (bDrawBorders) {
+			drawBorders();
+		}
+		
+		
+		_shader->end();
+		ofPopMatrix();
+	}
+}
+
+void Cog::drawBorders()
+{
+	glNormal3f(0, 0, 1);
+	glLineWidth( edgeLinewidth );
+	edges.drawElements(GL_LINES, edgeIndexCount );
+};
+
+void Cog::setupMesh()
+{
+	clearMesh();
+	
+	m = createCog( minU, maxU, minV, maxV, thickness, subdU, subdV );
+}
+
+void Cog::clearMesh()
+{
+	//delete or pointed mesh
+	if(m!=NULL)
+	{
+		m->clear();
+	}
+	delete m;
+	m = NULL;
+	
+	
+	//clear the box edge mesh
+	edges.clear();
+}
+
+void Cog::clear(){
+	clearMesh();
+}
+
+int Cog::radiansToSdubd( float radians )
+{
+	//TODO: incorperate radius here
+	return int(radians * subdScl);
+}
+
+ofVec3f Cog::normalFrom3Points(ofVec3f p0, ofVec3f p1, ofVec3f p2)
+{
+	return (p2 - p1).cross( p0 - p1).normalized();
+}
+
+ofVboMesh* Cog::createCog( float uRadiansMin, float uRadiansMax, float vRadiansMin, float vRadiansMax, float thickness, int subdX, int subdY )
+{
+	return createCogMesh(uRadiansMin, uRadiansMax, vRadiansMin, vRadiansMax, 0, thickness, subdX, subdY, 1 );
+}
+
+ofVboMesh* Cog::createCogMesh( float low_w, float hi_w, float low_h, float hi_h, float low_d, float hi_d, int _subx, int _suby, int _subz )
 {
 	ofVboMesh* m = new ofVboMesh;
 	
@@ -228,5 +362,156 @@ ofVboMesh* Cog::createBoxMesh( float low_w, float hi_w, float low_h, float hi_h,
 	m->addIndices( indices );
 	
 	
+	//create an edge mesh to draw the box outline
+	edges.clear();
+	vector<ofVec3f> edgeVerts;
+	vector<ofVec2f> edgeUVs;
+	vector<ofIndexType> edgeIndices;
+	
+	//it's probably easier to reconstrcut them than to sample the existing mesh
+
+	for (int i=0; i<=subx; i++)
+	{
+		edgeIndices.push_back(edgeVerts.size());
+		if(i<subx)	edgeIndices.push_back(edgeVerts.size()+1);
+		else	edgeIndices.push_back(edgeVerts.size());
+		
+		edgeVerts.push_back( ofVec3f( i*stepX + low_w, low_h, low_d ) );
+		edgeUVs.push_back( ofVec2f(i*uvStepX, 0 ) );
+		
+	}
+	for (int i=0; i<=subx; i++)
+	{
+		edgeIndices.push_back(edgeVerts.size());
+		if(i<subx)	edgeIndices.push_back(edgeVerts.size()+1);
+		else	edgeIndices.push_back(edgeVerts.size());
+		
+		edgeVerts.push_back( ofVec3f( i*stepX + low_w, hi_h, low_d ) );
+		edgeUVs.push_back( ofVec2f(i*uvStepX, 1 ) );
+		
+	}
+	for (int i=0; i<=subx; i++)
+	{
+		edgeIndices.push_back(edgeVerts.size());
+		if(i<subx)	edgeIndices.push_back(edgeVerts.size()+1);
+		else	edgeIndices.push_back(edgeVerts.size());
+		
+		edgeVerts.push_back( ofVec3f( i*stepX + low_w, low_h, hi_d ) );
+		edgeUVs.push_back( ofVec2f(i*uvStepX, 0 ) );
+		
+	}
+	for (int i=0; i<=subx; i++)
+	{
+		edgeIndices.push_back(edgeVerts.size());
+		if(i<subx)	edgeIndices.push_back(edgeVerts.size()+1);
+		else	edgeIndices.push_back(edgeVerts.size());
+		
+		edgeVerts.push_back( ofVec3f( i*stepX + low_w, hi_h, hi_d ) );
+		edgeUVs.push_back( ofVec2f(i*uvStepX, 1 ) );
+		
+	}
+	
+	
+	
+	
+	for (int i=0; i<=suby; i++)
+	{
+		edgeIndices.push_back(edgeVerts.size());
+		if(i<suby)	edgeIndices.push_back(edgeVerts.size()+1);
+		else	edgeIndices.push_back(edgeVerts.size());
+		
+		edgeVerts.push_back( ofVec3f( low_w, i*stepY + low_h, low_d ) );
+		edgeUVs.push_back( ofVec2f( 0, i * uvStepY ) );
+		
+	}
+	for (int i=0; i<=suby; i++)
+	{
+		edgeIndices.push_back(edgeVerts.size());
+		if(i<suby)	edgeIndices.push_back(edgeVerts.size()+1);
+		else	edgeIndices.push_back(edgeVerts.size());
+		
+		edgeVerts.push_back( ofVec3f( hi_w, i*stepY + low_h, low_d ) );
+		edgeUVs.push_back( ofVec2f( 1, i * uvStepY ) );
+		
+	}
+	for (int i=0; i<=suby; i++)
+	{
+		edgeIndices.push_back(edgeVerts.size());
+		if(i<suby)	edgeIndices.push_back(edgeVerts.size()+1);
+		else	edgeIndices.push_back(edgeVerts.size());
+		
+		edgeVerts.push_back( ofVec3f( low_w, i*stepY + low_h, hi_d ) );
+		edgeUVs.push_back( ofVec2f( 0, i * uvStepY ) );
+		
+	}
+	for (int i=0; i<=suby; i++)
+	{
+		edgeIndices.push_back(edgeVerts.size());
+		if(i<suby)	edgeIndices.push_back(edgeVerts.size()+1);
+		else	edgeIndices.push_back(edgeVerts.size());
+		
+		edgeVerts.push_back( ofVec3f( hi_w, i*stepY + low_h, hi_d ) );
+		edgeUVs.push_back( ofVec2f( 1, i * uvStepY ) );
+		
+	}
+	
+	
+	
+	for (int i=0; i<=subz; i++)
+	{
+		edgeIndices.push_back(edgeVerts.size());
+		if(i<subz)	edgeIndices.push_back(edgeVerts.size()+1);
+		else	edgeIndices.push_back(edgeVerts.size());
+		
+		edgeVerts.push_back( ofVec3f( low_w, low_h, i*stepZ + low_d ) );
+		edgeUVs.push_back( ofVec2f( 0, i * uvStepY ) );
+	}
+	for (int i=0; i<=subz; i++)
+	{
+		edgeIndices.push_back(edgeVerts.size());
+		if(i<subz)	edgeIndices.push_back(edgeVerts.size()+1);
+		else	edgeIndices.push_back(edgeVerts.size());
+		
+		edgeVerts.push_back( ofVec3f( hi_w, low_h, i*stepZ + low_d ) );
+		edgeUVs.push_back( ofVec2f( 1, i * uvStepY ) );
+	}
+	for (int i=0; i<=subz; i++)
+	{
+		edgeIndices.push_back(edgeVerts.size());
+		if(i<subz)	edgeIndices.push_back(edgeVerts.size()+1);
+		else	edgeIndices.push_back(edgeVerts.size());
+		
+		edgeVerts.push_back( ofVec3f( low_w, hi_h, i*stepZ + low_d ) );
+		edgeUVs.push_back( ofVec2f( 0, i * uvStepY ) );
+	}
+	for (int i=0; i<=subz; i++)
+	{
+		edgeIndices.push_back(edgeVerts.size());
+		if(i<subz)	edgeIndices.push_back(edgeVerts.size()+1);
+		else	edgeIndices.push_back(edgeVerts.size());
+		
+		edgeVerts.push_back( ofVec3f( hi_w, hi_h, i*stepZ + low_d ) );
+		edgeUVs.push_back( ofVec2f( 1, i * uvStepY ) );
+	}
+	
+	
+
+	edges.setVertexData( &edgeVerts[0], edgeVerts.size(), GL_STATIC_DRAW );
+	edges.setTexCoordData( &edgeUVs[0], edgeUVs.size(), GL_STATIC_DRAW );
+	edges.setIndexData( &edgeIndices[0], edgeIndices.size(), GL_STATIC_DRAW );
+	
+	edgeIndexCount = edgeIndices.size();
+	
+	edgeLinewidth = 4;
+	
 	return m;
 }
+
+
+
+
+
+
+
+
+
