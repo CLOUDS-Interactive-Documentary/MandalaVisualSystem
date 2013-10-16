@@ -17,11 +17,12 @@ void MandalaVisualSystem::selfSetupGui(){
 	customGui->copyCanvasStyle(gui);
 	customGui->copyCanvasProperties(gui);
 	customGui->setName("Custom");
+	customGui->setWidth( customGui->getRect()->getWidth() * 2 );
 	customGui->setWidgetFontSize(OFX_UI_FONT_SMALL);
 	
-	customGui->addSlider("globalScale.x", -10, 10, &mandalaGlobalScale.x );
-	customGui->addSlider("globalScale.y", -10, 10, &mandalaGlobalScale.y );
-	customGui->addSlider("globalScale.z", -10, 10, &mandalaGlobalScale.z );
+	customGui->addSlider("globalScale.x", -5, 5, &mandalaGlobalScale.x )->setIncrement(.01);
+	customGui->addSlider("globalScale.y", -5, 5, &mandalaGlobalScale.y )->setIncrement(.01);
+	customGui->addSlider("globalScale.z", -5, 5, &mandalaGlobalScale.z )->setIncrement(.01);
 	
 	ofAddListener(customGui->newGUIEvent, this, &MandalaVisualSystem::selfGuiEvent);
 	guis.push_back(customGui);
@@ -53,7 +54,9 @@ void MandalaVisualSystem::selfSetupGui(){
 void MandalaVisualSystem::selfGuiEvent(ofxUIEventArgs &e){
 	
 	string name = e.getName();
-	if(e.widget->getKind() == OFX_UI_WIDGET_TOGGLE && e.getToggle()->getValue() == true )
+	int kind = e.widget->getKind();
+	
+	if( kind == OFX_UI_WIDGET_TOGGLE && e.getToggle()->getValue() == true )
 	{
 		if(e.widget->getParent()->getName() == "subsystem radio")
 		{
@@ -63,8 +66,6 @@ void MandalaVisualSystem::selfGuiEvent(ofxUIEventArgs &e){
 			}
 		}
 	}
-
-//	cout << e.getName() << " : " << e.widget->getParent()->getName() << endl;
 }
 
 //Use system gui for global or logical settings, for exmpl
@@ -95,8 +96,9 @@ void MandalaVisualSystem::selfSetup(){
 	
 	//define our subSystems
 	subSystems["noise field"] = 0;
-	subSystems["muybridge"] = 1;
-	subSystems["emanation"] = 2;
+	subSystems["default"] = 1;
+//	subSystems["emanation"] = 2;
+	subSystems["muybridge"] = 3;
 	
 	currentSubsystem = nextSubsystem = -1;
 
@@ -165,6 +167,10 @@ void MandalaVisualSystem::selfUpdate()
 			//NOISE FIELD
 			case 0:
 				buildNoiseFieldSubsystem();
+				break;
+				
+			case 1:
+				buildDefaultSubsystem();
 				break;
 				
 			default:
@@ -247,11 +253,12 @@ void MandalaVisualSystem::drawMandala()
 				cogs[i]->draw( &deformedAndTextured );
 			}
 			break;
+		case 1:
+			drawRandomTextures();
+			break;
 			
 			
 		default:
-			
-			drawAllTheCogs( &deformerShader );
 			drawRandomTextures();
 			break;
 	}
