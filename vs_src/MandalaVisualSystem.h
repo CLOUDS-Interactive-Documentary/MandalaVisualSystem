@@ -177,7 +177,10 @@ protected:
 	//shaders
 	ofShader normalShader;
 	ofShader deformerShader;
+	ofShader deformedAndTextured;
 	
 	vector<Cog*> cogs;
+	
+	vector <ofImage> images;
 	
 };

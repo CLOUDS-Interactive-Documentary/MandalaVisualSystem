@@ -79,6 +79,7 @@
 		4695E2BD17512E45003001E2 /* ofxSwarmBehavior.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4695E2AA17512E45003001E2 /* ofxSwarmBehavior.cpp */; };
 		4695E2BE17512E45003001E2 /* ofxVerletSolver.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4695E2AD17512E45003001E2 /* ofxVerletSolver.cpp */; };
 		4695E2CA17513D99003001E2 /* ofxCameraSaveLoad.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4695E2C817513D99003001E2 /* ofxCameraSaveLoad.cpp */; };
+		50765D7A180EF186000D5901 /* CogTextured.frag in Sources */ = {isa = PBXBuildFile; fileRef = 50765D79180EF186000D5901 /* CogTextured.frag */; };
 		50993045180484E300152517 /* facingRatio.frag in Sources */ = {isa = PBXBuildFile; fileRef = 50993041180484E300152517 /* facingRatio.frag */; };
 		50993046180484E300152517 /* facingRatio.vert in Sources */ = {isa = PBXBuildFile; fileRef = 50993042180484E300152517 /* facingRatio.vert */; };
 		50993047180484E300152517 /* normalShader.frag in Sources */ = {isa = PBXBuildFile; fileRef = 50993043180484E300152517 /* normalShader.frag */; };
@@ -382,6 +383,7 @@
 		4695E2AE17512E45003001E2 /* ofxVerletSolver.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ofxVerletSolver.h; sourceTree = "<group>"; };
 		4695E2C817513D99003001E2 /* ofxCameraSaveLoad.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ofxCameraSaveLoad.cpp; sourceTree = "<group>"; };
 		4695E2C917513D99003001E2 /* ofxCameraSaveLoad.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ofxCameraSaveLoad.h; sourceTree = "<group>"; };
+		50765D79180EF186000D5901 /* CogTextured.frag */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.glsl; path = CogTextured.frag; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.glsl; };
 		50993041180484E300152517 /* facingRatio.frag */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.glsl; path = facingRatio.frag; sourceTree = "<group>"; };
 		50993042180484E300152517 /* facingRatio.vert */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.glsl; path = facingRatio.vert; sourceTree = "<group>"; };
 		50993043180484E300152517 /* normalShader.frag */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.glsl; path = normalShader.frag; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.glsl; };
@@ -1130,6 +1132,7 @@
 		E7D26E5F17A31C0D00652876 /* shaders */ = {
 			isa = PBXGroup;
 			children = (
+				50765D79180EF186000D5901 /* CogTextured.frag */,
 				50BEFDD418086B9900E03539 /* deformer.frag */,
 				50BEFDD518086B9900E03539 /* deformer.vert */,
 				50993041180484E300152517 /* facingRatio.frag */,
@@ -1313,6 +1316,7 @@
 				50BEFDD618086B9900E03539 /* deformer.frag in Sources */,
 				50BEFDD718086B9900E03539 /* deformer.vert in Sources */,
 				50AACFEF1809C1AF00203277 /* Cog.cpp in Sources */,
+				50765D7A180EF186000D5901 /* CogTextured.frag in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

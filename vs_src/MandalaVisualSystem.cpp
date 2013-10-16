@@ -75,6 +75,14 @@ void MandalaVisualSystem::selfSetup(){
 		if(i%3)cogs.push_back( new Cog( 33, 30, .1 * i, .09, .4, .1) );
 		cout << cogs.size() << endl;
 	}
+	
+	
+	images.resize(4);
+	
+	images[0].loadImage( getVisualSystemDataPath() + "images/elsaHat.png" );
+	images[1].loadImage( getVisualSystemDataPath() + "images/germanBirdRamp.jpg" );
+	images[2].loadImage( getVisualSystemDataPath() + "images/greenFatBird.jpg" );
+	images[3].loadImage( getVisualSystemDataPath() + "images/laser-eyes1.jpg" );
 }
 
 // selfPresetLoaded is called whenever a new preset is triggered
@@ -146,8 +154,14 @@ void MandalaVisualSystem::drawMandala()
 		ofPushMatrix();
 		ofRotate( rotY, 0, 1, 0);
 		
-		if(i%2)	cogs[i]->draw( &deformerShader );
-		else	cogs[i]->drawBorders( &deformerShader );
+		if(i%2){
+			cogs[i]->frontTexture = &images[i%4].getTextureReference();
+			cogs[i]->sideTexture = &images[(i+1)%4].getTextureReference();
+			cogs[i]->draw( &deformedAndTextured );
+		}
+		else{
+			cogs[i]->drawBorders( &deformerShader );
+		}
 		
 		ofPopMatrix();
 	}
@@ -187,6 +201,10 @@ void MandalaVisualSystem::selfExit()
 	
 	for (vector<Cog*>::iterator it = cogs.begin(); it != cogs.end(); it++) {
 		(*it)->clear();
+	}
+	
+	for (int i=0; i<images.size(); i++) {
+		images[i].clear();
 	}
 }
 
@@ -367,6 +385,8 @@ void MandalaVisualSystem::loadShaders()
 {
 	normalShader.load( getVisualSystemDataPath() + "shaders/normalShader");
 	deformerShader.load( getVisualSystemDataPath() + "shaders/deformer");
+	
+	deformedAndTextured.load( getVisualSystemDataPath() + "shaders/deformer.vert", getVisualSystemDataPath() + "shaders/CogTextured.frag");
 }
 
 void MandalaVisualSystem::deleteMesh( ofVboMesh* m )

@@ -8,19 +8,14 @@
 
 #include "Cog.h"
 
-Cog::Cog(float _radius,
-	float _thickness,
-	float _startU,
-	float _sweepU,
-	float _startV,
-	float _sweepV)
+Cog::Cog( float _radius, float _thickness, float _startU, float _sweepU, float _startV, float _sweepV)
 {
 	m = NULL;
 	shader != NULL;
 	bDrawWireframe = false;
 	
 	setup( _radius, _thickness, _startU, _sweepU, _startV, _sweepV);
-};
+}
 
 Cog::Cog()
 {
@@ -29,20 +24,19 @@ Cog::Cog()
 	bDrawWireframe = false;
 	
 	setup( 10, 2, 0, .5, 0.25, .75);
-};
+}
 
 Cog::~Cog()
 {
 	clearMesh();
-};
+}
 
-void Cog::setup(float _radius,
-		   float _thickness,
-		   float _startU,
-		   float _sweepU,
-		   float _startV,
-		   float _sweepV)
+
+void Cog::setup(float _radius,float _thickness, float _startU, float _sweepU, float _startV, float _sweepV)
 {
+	frontTexture = NULL;
+	sideTexture = NULL;
+	
 	edgeIndexCount = 0;
 	bDrawBorders = false;
 	bDrawMesh = true;
@@ -82,6 +76,24 @@ void Cog::draw( ofShader* _shader )
 		_shader->setUniform2f("radianOffset",  + radianOffset.x,  + radianOffset.y );
 		_shader->setUniform2f("sweep", sweepU, sweepV);
 		_shader->setUniform2f("startSweep", minU, minV);
+		if(frontTexture != NULL)
+		{
+			_shader->setUniform1i("usingFrontTexture", 1);
+			_shader->setUniformTexture("frontTexture", *frontTexture, 0);
+			_shader->setUniform2f("frontTexDim", frontTexture->getWidth(), frontTexture->getHeight() );
+		}
+		else
+		{
+			_shader->setUniform1i("usingFrontTexture", 0);
+		}
+		if(sideTexture != NULL){
+			_shader->setUniform1i("usingSideTexture", 1);
+			_shader->setUniformTexture("sideTexture", *sideTexture, 1);
+			_shader->setUniform2f("sideTexDim", sideTexture->getWidth(), sideTexture->getHeight() );
+		}
+		else{
+			_shader->setUniform1i("usingSideTexture", 0);
+		}
 		
 		if(bDrawMesh)
 		{
@@ -123,8 +135,10 @@ void Cog::drawBorders(ofShader* _shader )
 		_shader->end();
 		ofPopMatrix();
 	}
-};
+}
 
+
+//MESH METHODS
 void Cog::setupMesh()
 {
 	clearMesh();
@@ -147,7 +161,8 @@ void Cog::clearMesh()
 	edges.clear();
 }
 
-void Cog::clear(){
+void Cog::clear()
+{
 	clearMesh();
 }
 

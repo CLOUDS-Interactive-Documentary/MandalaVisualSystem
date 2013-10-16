@@ -50,5 +50,7 @@ public:
 	float edgeLinewidth;
 	
 	ofShader* shader;
+	ofTexture* frontTexture;
+	ofTexture* sideTexture;
 	
 };
