@@ -378,29 +378,21 @@ void MandalaVisualSystem::buildNoiseFieldSubsystem()
 	float thickness = 10;
 	float roughSize = 20;
 	
-	float radius;
-	float circumfrence;
-	
-	float minCol = 0;
-	float maxCol = 1.5;
+	float radius, circumfrence, minCol = 0, maxCol = 1.5;
+	int subd;
 	for (int i=0; i<numRings; i++) {
 		radius = thickness * i + thickness*1.25;
 		
 		circumfrence = TWO_PI * radius;
-		int subd = int(circumfrence / roughSize);
-		
-//		cout << "radius: " << radius << endl;
-//		cout << "circumfrence: " << circumfrence << endl;
-//		cout << "subd: " << subd << endl << endl;
+		subd = int(circumfrence / roughSize);
 		
 		float step = .5/subd;
 		for(int j=0; j<subd; j++){
 			float sweep = .9 * step;
-			Cog* c = addCog(radius, thickness, float(j) * step, sweep, .475 - ofRandom(2.), .025 + ofRandom(.3), Cog::radiansToSdubd(sweep), 6 );
+			Cog* c = addCog(radius, thickness, float(j) * step, sweep, ofRandom(2.), .025 + ofRandom(.3), Cog::radiansToSdubd(sweep), 6 );
 			
 			c->sideColor.set( ofRandom(minCol, maxCol), ofRandom(minCol, maxCol), ofRandom(minCol, maxCol), 1. );
-			c->frontColor.set( c->sideColor.getInverted() );
-			
+			c->frontColor.set( c->sideColor.getInverted() * 2.);
 		}
 	}
 	

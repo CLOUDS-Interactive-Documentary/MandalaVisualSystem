@@ -14,9 +14,9 @@ uniform vec2 sideTexDim;
 uniform vec4 frontColor = vec4(1.);
 uniform vec4 sideColor = vec4(1.);
 
-uniform float diffuseScale = .25;
-uniform float specularScale = .5;
-uniform float specularExpo = 64.;
+uniform float diffuseScale = .5;
+uniform float specularScale = .75;
+uniform float specularExpo = 32.;
 
 uniform vec2 sweep;
 uniform vec2 startSweep;
