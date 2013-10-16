@@ -141,12 +141,21 @@ class MandalaVisualSystem : public CloudsVisualSystem {
 	
 	void loadShaders();
 	
+	Cog* addCog( float _radius, float _thickness, float _startU, float _sweepU, float _startV, float _sweepV);
+	Cog* addCog( float _radius, float _thickness, float _startU, float _sweepU, float _startV, float _sweepV, int _subdU, int _subdV);
+	
+	void drawAllTheCogs(ofShader* shader = NULL );
 	void drawMandala();
+	void drawRandomTextures();
+	
+	void tearDownSubsystem();
+	void buildNoiseFieldSubsystem();
 
 protected:
     
     //  our Stuff
 	ofxUISuperCanvas* customGui;
+	ofxUISuperCanvas* subsystemGui;
 	
 	bool videoLoaded;
 	ofImage someImage;
@@ -165,5 +174,8 @@ protected:
 	vector <ofImage> images;
 	vector<ofTexture*> textures;
 	ofVideoPlayer vid;
+	
+	int currentSubsystem, nextSubsystem;
+	map<string, int> subSystems;
 	
 };

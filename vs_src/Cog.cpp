@@ -17,6 +17,15 @@ Cog::Cog( float _radius, float _thickness, float _startU, float _sweepU, float _
 	setup( _radius, _thickness, _startU, _sweepU, _startV, _sweepV);
 }
 
+Cog::Cog( float _radius, float _thickness, float _startU, float _sweepU, float _startV, float _sweepV, int _subdU, int _subdV)
+{
+	m = NULL;
+	shader != NULL;
+	bDrawWireframe = false;
+	
+	setup( _radius, _thickness, _startU, _sweepU, _startV, _sweepV, _subdU, _subdV);
+}
+
 Cog::Cog()
 {
 	m = NULL;
@@ -64,7 +73,39 @@ void Cog::setup(float _radius,float _thickness, float _startU, float _sweepU, fl
 	setupMesh();
 }
 
-void Cog::draw( ofShader* _shader )
+void Cog::setup(float _radius,float _thickness, float _startU, float _sweepU, float _startV, float _sweepV, int _subdU, int _subdV)
+{
+	frontTexture = NULL;
+	sideTexture = NULL;
+	
+	edgeIndexCount = 0;
+	bDrawBorders = false;
+	bDrawMesh = true;
+	edgeLinewidth = 1.;
+	thickness = _thickness;
+	radius = _radius;
+	
+	subdScl = 10;
+	
+	frontColor.set(1, 1, 1, 1);
+	sideColor.set(1, 1, 1, 1);
+	
+	//get our subd for u and v
+	minU = TWO_PI * _startU;
+	maxU = TWO_PI * (_startU + _sweepU);
+	minV = PI * _startV;
+	maxV = PI * (_startV + _sweepV);
+	
+	sweepU = maxU - minU;
+	sweepV = maxV - minV;
+	
+	subdU = _subdU;
+	subdV = _subdV;
+	
+	setupMesh();
+}
+
+void Cog::draw( ofShader* _shader, int renderMode)
 {
 	if(_shader == NULL)	_shader = shader;
 	
@@ -74,9 +115,11 @@ void Cog::draw( ofShader* _shader )
 		//			ofMultMatrix( getGlobalTransformMatrix() );
 		
 		_shader->begin();
+		_shader->setUniform1i("renderMode", renderMode);
 		_shader->setUniform1f( "time", ofGetElapsedTimef() );
 		_shader->setUniform1f( "radius", radius );
-		_shader->setUniform2f("radianOffset",  + radianOffset.x,  + radianOffset.y );
+		_shader->setUniform2f("radianOffset", radianOffset.x, radianOffset.y );
+		_shader->setUniform2f("phiTheta", (minU + maxU)*.5, (minV + maxV)*.5 );
 		_shader->setUniform2f("sweep", sweepU, sweepV);
 		_shader->setUniform2f("startSweep", minU, minV);
 		_shader->setUniform4f("frontColor", frontColor.r, frontColor.g, frontColor.b, frontColor.a );
@@ -175,7 +218,7 @@ void Cog::clear()
 int Cog::radiansToSdubd( float radians )
 {
 	//TODO: incorperate radius here
-	return int(radians * subdScl);
+	return int(radians * 10);
 }
 
 ofVec3f Cog::normalFrom3Points(ofVec3f p0, ofVec3f p1, ofVec3f p2)

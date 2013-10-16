@@ -11,14 +11,16 @@
 class Cog : public ofNode{
 public:
 	Cog(float _radius, float _thickness, float _startU, float _sweepU, float _startV, float _sweepV);
+	Cog( float _radius, float _thickness, float _startU, float _sweepU, float _startV, float _sweepV, int _subdU, int _subdV);
 	
 	Cog();
 	
 	~Cog();
 	
 	void setup(float _radius, float _thickness, float _startU, float _sweepU, float _startV, float _sweepV);
+	void setup(float _radius,float _thickness, float _startU, float _sweepU, float _startV, float _sweepV, int _subdU, int _subdV);
 	
-	void draw( ofShader* _shader = NULL );
+	void draw( ofShader* _shader = NULL, int renderMode = 0);
 	
 	void drawBorders(ofShader* _shader);
 	
@@ -28,7 +30,7 @@ public:
 	
 	void clear();
 	
-	int radiansToSdubd( float radians );
+	static int radiansToSdubd( float radians );
 	
 	ofVec3f normalFrom3Points(ofVec3f p0, ofVec3f p1, ofVec3f p2);
 	
@@ -54,5 +56,6 @@ public:
 	ofTexture* sideTexture;
 	
 	ofFloatColor frontColor, sideColor;
+	int useNoiseOfset;
 	
 };

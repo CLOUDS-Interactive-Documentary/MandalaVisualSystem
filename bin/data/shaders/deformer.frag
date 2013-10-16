@@ -39,6 +39,6 @@ void main(void)
 //	}
 	
 	//
-	if(gl_FragColor.w < discardThreshold)	discard;
+//	if(gl_FragColor.w < discardThreshold)	discard;
 }
 

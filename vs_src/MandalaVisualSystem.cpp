@@ -19,16 +19,48 @@ void MandalaVisualSystem::selfSetupGui(){
 	customGui->setName("Custom");
 	customGui->setWidgetFontSize(OFX_UI_FONT_SMALL);
 	
-	
-
-	
 	ofAddListener(customGui->newGUIEvent, this, &MandalaVisualSystem::selfGuiEvent);
 	guis.push_back(customGui);
 	guimap[customGui->getName()] = customGui;
+	
+	
+	subsystemGui = new ofxUISuperCanvas("sub systems", gui);
+	subsystemGui->copyCanvasStyle(gui);
+	subsystemGui->copyCanvasProperties(gui);
+	subsystemGui->setName("sub systems");
+	subsystemGui->setWidgetFontSize(OFX_UI_FONT_SMALL);
+	subsystemGui->addFPS();
+	subsystemGui->addSpacer();
+	
+	vector <string> subsystemNames;
+	for (map<string, int>::iterator it=subSystems.begin(); it!=subSystems.end(); it++) {
+		subsystemNames.push_back( it->first );
+	}
+	subsystemGui->addRadio("subsystem radio", subsystemNames );
+	
+	
+	ofAddListener(subsystemGui->newGUIEvent, this, &MandalaVisualSystem::selfGuiEvent);
+	guis.push_back(subsystemGui);
+	guimap[customGui->getName()] = subsystemGui;
+
+	
 }
 
 void MandalaVisualSystem::selfGuiEvent(ofxUIEventArgs &e){
+	
+	string name = e.getName();
+	if(e.widget->getKind() == OFX_UI_WIDGET_TOGGLE && e.getToggle()->getValue() == true )
+	{
+		if(e.widget->getParent()->getName() == "subsystem radio")
+		{
+			if(subSystems.find(name) != subSystems.end())
+			{
+				nextSubsystem = subSystems[name];
+			}
+		}
+	}
 
+//	cout << e.getName() << " : " << e.widget->getParent()->getName() << endl;
 }
 
 //Use system gui for global or logical settings, for exmpl
@@ -57,6 +89,15 @@ void MandalaVisualSystem::selfSetup(){
 
 	//getVisualSystemDataPath() + "images/someImage.png";
 	
+	//define our subSystems
+	subSystems["noise field"] = 0;
+	subSystems["muybridge"] = 1;
+	subSystems["emanation"] = 2;
+	
+	currentSubsystem = nextSubsystem = -1;
+
+	
+	
 	//defaults
 	mandalaGlobalScale.set(1,1,1);
 	
@@ -65,21 +106,20 @@ void MandalaVisualSystem::selfSetup(){
 	loadShaders();
 	
 		
-	//create some cogs
-	for (int i=0; i<10; i++) {
-		cogs.push_back( new Cog(1, 1, .1 * i, .09, .2, .6) );
-		if(i%2)	cogs.push_back( new Cog(3, 2, .1 * i, .09, .2, .6) );
-		if(i%4) cogs.push_back( new Cog(8, 2, .1 * i, .09, .2, .6) );
-		
-		cogs.push_back( new Cog(12, 1, .1 * i, .09, .2, .6) );
-		if(i%2)	cogs.push_back( new Cog(14, 1, .1 * i, .09, .2, .6) );
-		if(i%4) cogs.push_back( new Cog(16, 1, .1 * i, .09, .2, .2) );
-		
-		if(i%2) cogs.push_back( new Cog(18, 3, .1 * i, .09, .2, .7) );
-		cogs.push_back( new Cog(22, 10, .1 * i, .09, .2, .3) );
-		if(i%3)cogs.push_back( new Cog( 33, 30, .1 * i, .09, .4, .1) );
-		cout << cogs.size() << endl;
-	}
+//	//create some cogs
+//	for (int i=0; i<10; i++) {
+//		cogs.push_back( new Cog(1, 1, .1 * i, .09, .2, .6) );
+//		if(i%2)	cogs.push_back( new Cog(3, 2, .1 * i, .09, .2, .6) );
+//		if(i%4) cogs.push_back( new Cog(8, 2, .1 * i, .09, .2, .6) );
+//		
+//		cogs.push_back( new Cog(12, 1, .1 * i, .09, .2, .6) );
+//		if(i%2)	cogs.push_back( new Cog(14, 1, .1 * i, .09, .2, .6) );
+//		if(i%4) cogs.push_back( new Cog(16, 1, .1 * i, .09, .2, .2) );
+//		
+//		if(i%2) cogs.push_back( new Cog(18, 3, .1 * i, .09, .2, .7) );
+//		cogs.push_back( new Cog(22, 10, .1 * i, .09, .2, .3) );
+//		if(i%3)cogs.push_back( new Cog( 33, 30, .1 * i, .09, .4, .1) );
+//	}
 	
 	
 	images.resize(4);
@@ -122,6 +162,25 @@ void MandalaVisualSystem::selfSceneTransformation(){
 void MandalaVisualSystem::selfUpdate()
 {
 	vid.update();
+	
+	if (currentSubsystem != nextSubsystem )
+	{
+		//build our sub system
+		switch (nextSubsystem) {
+				
+			//NOISE FIELD
+			case 0:
+				tearDownSubsystem();
+				buildNoiseFieldSubsystem();
+				break;
+				
+			default:
+				tearDownSubsystem();
+				break;
+		}
+		
+		currentSubsystem = nextSubsystem;
+	}
 }
 
 // selfDraw draws in 3D using the default ofEasyCamera
@@ -162,7 +221,7 @@ void MandalaVisualSystem::selfDraw()
 	ofPopMatrix();
 }
 
-void MandalaVisualSystem::drawMandala()
+void MandalaVisualSystem::drawRandomTextures()
 {
 	for (int i=0; i<cogs.size(); i++) {
 		float rotY = ofGetElapsedTimef() * cogs[i]->radius;
@@ -170,15 +229,45 @@ void MandalaVisualSystem::drawMandala()
 		ofRotate( rotY, 0, 1, 0);
 		
 		if(i%2){
-			cogs[i]->frontTexture = textures[i%textures.size()];
-			cogs[i]->sideTexture = textures[(i+1)%textures.size()];
-			cogs[i]->draw( &deformedAndTextured );
+//			cogs[i]->frontTexture = textures[i%textures.size()];
+//			cogs[i]->sideTexture = textures[(i+1)%textures.size()];
+			cogs[i]->draw( &deformedAndTextured, currentSubsystem );
 		}
 		else{
 			cogs[i]->drawBorders( &deformerShader );
 		}
 		
 		ofPopMatrix();
+	}
+}
+
+void MandalaVisualSystem::drawMandala()
+{
+
+	
+	switch (currentSubsystem) {
+		case 0:
+			//Noise field
+//			drawAllTheCogs( &deformerShader );
+			for (int i=0; i<cogs.size(); i++) {
+//				cogs[i]->bDrawWireframe = true;
+				cogs[i]->draw( &deformedAndTextured );
+			}
+			break;
+			
+			
+		default:
+			
+			drawAllTheCogs( &deformerShader );
+			//drawRandomTextures();
+			break;
+	}
+}
+
+void MandalaVisualSystem::drawAllTheCogs( ofShader* shader)
+{
+	for (int i=0; i<cogs.size(); i++) {
+		cogs[i]->draw( shader );
 	}
 }
 
@@ -211,9 +300,7 @@ void MandalaVisualSystem::selfEnd(){
 void MandalaVisualSystem::selfExit()
 {
 	
-	for (vector<Cog*>::iterator it = cogs.begin(); it != cogs.end(); it++) {
-		(*it)->clear();
-	}
+	tearDownSubsystem();
 	
 	for (int i=0; i<images.size(); i++) {
 		images[i].clear();
@@ -256,3 +343,59 @@ void MandalaVisualSystem::loadShaders()
 	
 	deformedAndTextured.load( getVisualSystemDataPath() + "shaders/deformer.vert", getVisualSystemDataPath() + "shaders/CogTextured.frag");
 }
+
+void MandalaVisualSystem::tearDownSubsystem()
+{
+	for (vector<Cog*>::iterator it = cogs.begin(); it != cogs.end(); it++) {
+		(*it)->clear();
+	}
+	
+	cogs.clear();
+}
+
+Cog* MandalaVisualSystem::addCog( float _radius, float _thickness, float _startU, float _sweepU, float _startV, float _sweepV)
+{
+	cogs.push_back( new Cog( _radius, _thickness, _startU, _sweepU, _startV, _sweepV) );
+	return cogs.back();
+}
+
+Cog* MandalaVisualSystem::addCog( float _radius, float _thickness, float _startU, float _sweepU, float _startV, float _sweepV, int _subdU, int _subdV)
+{
+	cogs.push_back( new Cog( _radius, _thickness, _startU, _sweepU, _startV, _sweepV, _subdU, _subdV) );
+	return cogs.back();
+}
+
+void MandalaVisualSystem::buildNoiseFieldSubsystem()
+{
+	int numRings = 8;
+	float thickness = 10;
+	float roughSize = 20;
+	
+	float radius;
+	float circumfrence;
+	
+	float minCol = 0;
+	float maxCol = 1.5;
+	for (int i=0; i<numRings; i++) {
+		radius = thickness * i + thickness*1.25;
+		
+		circumfrence = TWO_PI * radius;
+		int subd = int(circumfrence / roughSize);
+		
+//		cout << "radius: " << radius << endl;
+//		cout << "circumfrence: " << circumfrence << endl;
+//		cout << "subd: " << subd << endl << endl;
+		
+		float step = .5/subd;
+		for(int j=0; j<subd; j++){
+			float sweep = .9 * step;
+			Cog* c = addCog(radius, thickness, float(j) * step, sweep, .475 - ofRandom(2.), .025 + ofRandom(.3), Cog::radiansToSdubd(sweep), 6 );
+			
+			c->sideColor.set( ofRandom(minCol, maxCol), ofRandom(minCol, maxCol), ofRandom(minCol, maxCol), 1. );
+			c->frontColor.set( c->sideColor.getInverted() );
+			
+		}
+	}
+	
+}
+
