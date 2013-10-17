@@ -456,8 +456,6 @@ void MandalaVisualSystem::buildMuybridgeSubsystem()
 		c->frontColor.set( 1,1,1,1 );
 		
 		c->frontTexture = &muybridgeRide[i].getTextureReference();
-		
-		cout << "wtf: " << i << endl;
 	}
 		
 }
