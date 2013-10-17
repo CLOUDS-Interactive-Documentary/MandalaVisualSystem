@@ -24,6 +24,14 @@ void MandalaVisualSystem::selfSetupGui(){
 	customGui->addSlider("globalScale.y", -5, 5, &mandalaGlobalScale.y )->setIncrement(.01);
 	customGui->addSlider("globalScale.z", -5, 5, &mandalaGlobalScale.z )->setIncrement(.01);
 	
+	customGui->addSlider("globalRotation.x", -180, 180, &globalRotation.x )->setIncrement(.01);
+	customGui->addSlider("globalRotation.y", -180, 180, &globalRotation.y )->setIncrement(.01);
+	customGui->addSlider("globalRotation.z", -180, 180, &globalRotation.z )->setIncrement(.01);
+	
+	customGui->addSlider("globalRotationVel.x", -180, 180, &globalRotationVelocity.x )->setIncrement(.01);
+	customGui->addSlider("globalRotationVel.y", -180, 180, &globalRotationVelocity.y )->setIncrement(.01);
+	customGui->addSlider("globalRotationVel.z", -180, 180, &globalRotationVelocity.z )->setIncrement(.01);
+	
 	ofAddListener(customGui->newGUIEvent, this, &MandalaVisualSystem::selfGuiEvent);
 	guis.push_back(customGui);
 	guimap[customGui->getName()] = customGui;
@@ -97,8 +105,8 @@ void MandalaVisualSystem::selfSetup(){
 	//define our subSystems
 	subSystems["noise field"] = 0;
 	subSystems["default"] = 1;
-//	subSystems["emanation"] = 2;
-	subSystems["muybridge"] = 3;
+	subSystems["muybridge"] = 2;
+//	subSystems["emanation"] = 3;
 	
 	currentSubsystem = nextSubsystem = -1;
 
@@ -114,7 +122,7 @@ void MandalaVisualSystem::selfSetup(){
 		
 
 	
-	
+	//TODO: work out a better system for only loading images when the subsystem is built. and clean up on teardown
 	images.resize(4);
 	
 	images[0].loadImage( getVisualSystemDataPath() + "images/elsaHat.png" );
@@ -129,6 +137,12 @@ void MandalaVisualSystem::selfSetup(){
 	vid.loadMovie(getVisualSystemDataPath() + "images/aliens.gif" );
 	vid.play();
 	textures.push_back( &vid.getTextureReference() );
+	
+	muybridgeRide.resize(15);
+	for(int i=0; i<muybridgeRide.size(); i++)
+	{
+		muybridgeRide[i].loadImage( getVisualSystemDataPath() + "images/Muybridge_race_horse_animated_" + ofToString(i+1) +".png" );
+	}
 }
 
 // selfPresetLoaded is called whenever a new preset is triggered
@@ -158,6 +172,8 @@ void MandalaVisualSystem::selfUpdate()
 	
 	if (currentSubsystem != nextSubsystem )
 	{
+		currentSubsystem = nextSubsystem;
+		
 		//remove the old subsystem
 		tearDownSubsystem();
 		
@@ -173,12 +189,15 @@ void MandalaVisualSystem::selfUpdate()
 				buildDefaultSubsystem();
 				break;
 				
+			case 2:
+				buildMuybridgeSubsystem();
+				break;
+				
 			default:
 				buildDefaultSubsystem();
 				break;
 		}
 		
-		currentSubsystem = nextSubsystem;
 	}
 }
 
@@ -186,8 +205,14 @@ void MandalaVisualSystem::selfUpdate()
 // you can change the camera by returning getCameraRef()
 void MandalaVisualSystem::selfDraw()
 {
+	float t = ofGetElapsedTimef();
 	ofPushMatrix();
+	
 	ofScale( mandalaGlobalScale.x, mandalaGlobalScale.y, mandalaGlobalScale.z );
+	
+	ofRotateX( globalRotation.x + globalRotationVelocity.x * t );
+	ofRotateY( globalRotation.y + globalRotationVelocity.y * t );
+	ofRotateZ( globalRotation.z + globalRotationVelocity.z * t );
 	
 	ofEnableAlphaBlending();
 	
@@ -257,6 +282,9 @@ void MandalaVisualSystem::drawMandala()
 			drawRandomTextures();
 			break;
 			
+		case 2:
+			drawAllTheCogs( &deformedAndTextured, 2 );
+			break;
 			
 		default:
 			drawRandomTextures();
@@ -264,10 +292,10 @@ void MandalaVisualSystem::drawMandala()
 	}
 }
 
-void MandalaVisualSystem::drawAllTheCogs( ofShader* shader)
+void MandalaVisualSystem::drawAllTheCogs( ofShader* shader, int renderMode )
 {
 	for (int i=0; i<cogs.size(); i++) {
-		cogs[i]->draw( shader );
+		cogs[i]->draw( shader, renderMode );
 	}
 }
 
@@ -386,14 +414,14 @@ void MandalaVisualSystem::buildDefaultSubsystem()
 void MandalaVisualSystem::buildNoiseFieldSubsystem()
 {
 	int numRings = 8;
-	float thickness = 10;
-	float roughSize = 20;
+	float thickness = 20;
+	float roughSize = 50;
 	float minRadius = 5;
 	
-	float radius, circumfrence, minCol = 0, maxCol = 1.5;
+	float radius, circumfrence, minCol = 0.25, maxCol = 1.5;
 	int subd;
 	for (int i=0; i<numRings; i++) {
-		radius = thickness * i + thickness*1.25;
+		radius = thickness * i + thickness*2;
 		
 		circumfrence = TWO_PI * radius;
 		subd = int(circumfrence / roughSize);
@@ -405,8 +433,32 @@ void MandalaVisualSystem::buildNoiseFieldSubsystem()
 			
 			c->sideColor.set( ofRandom(minCol, maxCol), ofRandom(minCol, maxCol), ofRandom(minCol, maxCol), 1. );
 			c->frontColor.set( c->sideColor.getInverted() * 2.);
+			
+			c->bDrawBorders = true;
+			c->edgeLinewidth = 3;
 		}
 	}
+}
+
+void MandalaVisualSystem::buildMuybridgeSubsystem()
+{
+	//15 images
+	float step = 1. /float(muybridgeRide.size());
+	float radius = 30;
+	float thickness = 30;
+	float sweep = step * .9;
 	
+	for (int i=0; i<muybridgeRide.size(); i++)
+	{
+		Cog* c = addCog(radius, thickness, float(i)*step, sweep, .4, .2 );
+		
+		c->sideColor.set( 1,1,1,1 );
+		c->frontColor.set( 1,1,1,1 );
+		
+		c->frontTexture = &muybridgeRide[i].getTextureReference();
+		
+		cout << "wtf: " << i << endl;
+	}
+		
 }
 

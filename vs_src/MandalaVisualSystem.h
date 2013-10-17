@@ -144,13 +144,14 @@ class MandalaVisualSystem : public CloudsVisualSystem {
 	Cog* addCog( float _radius, float _thickness, float _startU, float _sweepU, float _startV, float _sweepV);
 	Cog* addCog( float _radius, float _thickness, float _startU, float _sweepU, float _startV, float _sweepV, int _subdU, int _subdV);
 	
-	void drawAllTheCogs(ofShader* shader = NULL );
+	void drawAllTheCogs(ofShader* shader = NULL, int renderMode = -1 );
 	void drawMandala();
 	void drawRandomTextures();
 	
 	void tearDownSubsystem();
 	void buildDefaultSubsystem();
 	void buildNoiseFieldSubsystem();
+	void buildMuybridgeSubsystem();
 
 protected:
     
@@ -163,7 +164,10 @@ protected:
 	ofShader pointcloudShader;
 	ofVboMesh simplePointcloud;
 	
+	//global transforms
 	ofVec3f mandalaGlobalScale;
+	ofVec3f globalRotation;//Eular angles
+	ofVec3f globalRotationVelocity;//multiplied against elapsed time
 	
 	//shaders
 	ofShader normalShader;
@@ -173,6 +177,8 @@ protected:
 	vector<Cog*> cogs;
 	
 	vector <ofImage> images;
+	vector <ofImage> muybridgeRide;
+	
 	vector<ofTexture*> textures;
 	ofVideoPlayer vid;
 	

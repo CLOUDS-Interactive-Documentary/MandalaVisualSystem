@@ -115,7 +115,7 @@ void Cog::draw( ofShader* _shader, int renderMode)
 		//			ofMultMatrix( getGlobalTransformMatrix() );
 		
 		_shader->begin();
-		_shader->setUniform1i("renderMode", renderMode);
+		_shader->setUniform1i("renderMode", renderMode );
 		_shader->setUniform1f( "time", ofGetElapsedTimef() );
 		_shader->setUniform1f( "radius", radius );
 		_shader->setUniform2f("radianOffset", radianOffset.x, radianOffset.y );
@@ -150,8 +150,10 @@ void Cog::draw( ofShader* _shader, int renderMode)
 		}
 		
 		if (bDrawBorders) {
+			//I'm not really liking the way this is set up
 			glNormal3f(0, 0, 1);
 			glLineWidth( edgeLinewidth );
+			ofSetColor(frontColor);
 			edges.drawElements(GL_LINES, edgeIndexCount );
 		}
 		
