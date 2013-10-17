@@ -450,7 +450,7 @@ void MandalaVisualSystem::buildMuybridgeSubsystem()
 	
 	for (int i=0; i<muybridgeRide.size(); i++)
 	{
-		Cog* c = addCog(radius, thickness, float(i)*step, sweep, .4, .2 );
+		Cog* c = addCog(radius, thickness, float(i)*step, sweep, .435, .13 );
 		
 		c->sideColor.set( 1,1,1,1 );
 		c->frontColor.set( 1,1,1,1 );
